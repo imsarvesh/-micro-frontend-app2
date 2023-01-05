@@ -1,14 +1,25 @@
-import React, { Suspense } from "react";
+import { useState } from "react";
 
-import { Button } from "Components/Button";
+import Calendar from "Components/Calendar";
+import Meetings from "Components/Meetings";
+import { startOfToday } from "date-fns";
+import Layout from "Components/Layout";
+import Header from "Components/Header";
 
+const App = () => {
+  let today = startOfToday();
+  let [selectedDay, setSelectedDay] = useState(today);
 
-const App = () => (
-    <div className="m-3">
-        <Suspense fallback="Loading..">
-        <Button className="!bg-blue-600" data-testid="helloFriendsButton">Hello Friends 🚀</Button>
-        </Suspense>
-    </div>
-);
+  return (
+    <Layout>
+      <Calendar
+        selectedDay={selectedDay}
+        onSelect={(day) => setSelectedDay(day)}
+      />
+
+      <Meetings selectedDay={selectedDay} />
+    </Layout>
+  );
+};
 
 export default App;
