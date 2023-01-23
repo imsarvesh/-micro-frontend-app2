@@ -5,7 +5,6 @@ import {
   endOfMonth,
   format,
   getDay,
-  isEqual,
   isSameDay,
   isSameMonth,
   isToday,
@@ -13,6 +12,7 @@ import {
   parseISO,
 } from "date-fns";
 import { useEffect, useState } from "react";
+import { startOfToday } from "date-fns";
 
 import { getMeetings } from "../service/request";
 
@@ -20,8 +20,13 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Example({ onSelect, selectedDay }) {
+export default function Calendar() {
   const [meetings, setMeetings] = useState([]);
+  let today = startOfToday();
+
+  console.log({ today });
+
+  let [selectedDay, setSelectedDay] = useState(today);
 
   let [currentMonth, setCurrentMonth] = useState(
     format(selectedDay, "MMM-yyyy")
@@ -33,9 +38,27 @@ export default function Example({ onSelect, selectedDay }) {
     end: endOfMonth(firstDayCurrentMonth),
   });
 
+  const onSelect = (day) => {
+    setSelectedDay(day);
+    const selectedDay = new CustomEvent("SELECTED_DAY", {
+      detail: { selectedDay: day },
+    });
+    window.dispatchEvent(selectedDay);
+  };
+
   useEffect(() => {
     getMeetings().then(setMeetings);
-  }, []);
+
+    window.addEventListener("SELECTED_MEETING", ({ detail }) => {
+      // setSelectedDay(new Date(detail.selectedMeeting.startDatetime));
+      // setCurrentMonth(format(selectedDay, "MMM-yyyy"));
+      const day = new Date(detail.selectedMeeting.startDatetime);
+      setSelectedDay(day);
+      setCurrentMonth(format(day, "MMM-yyyy"));
+
+      console.log(new Date(detail.selectedMeeting.startDatetime));
+    });
+  }, [selectedDay]);
 
   function previousMonth() {
     let firstDayNextMonth = add(firstDayCurrentMonth, { months: -1 });
@@ -44,6 +67,7 @@ export default function Example({ onSelect, selectedDay }) {
 
   function nextMonth() {
     let firstDayNextMonth = add(firstDayCurrentMonth, { months: 1 });
+    console.log({ firstDayNextMonth });
     setCurrentMonth(format(firstDayNextMonth, "MMM-yyyy"));
   }
 
@@ -91,22 +115,27 @@ export default function Example({ onSelect, selectedDay }) {
             >
               <button
                 type="button"
-                onClick={() => onSelect(day)}
+                onClick={() => {
+                  console.log({ day: typeof day });
+                  onSelect(day);
+                }}
                 className={classNames(
-                  isEqual(day, selectedDay) && "text-white",
-                  !isEqual(day, selectedDay) && isToday(day) && "text-red-500",
-                  !isEqual(day, selectedDay) &&
+                  isSameDay(day, selectedDay) && "text-white",
+                  !isSameDay(day, selectedDay) &&
+                    isToday(day) &&
+                    "text-red-500",
+                  !isSameDay(day, selectedDay) &&
                     !isToday(day) &&
                     isSameMonth(day, firstDayCurrentMonth) &&
                     "text-gray-900",
-                  !isEqual(day, selectedDay) &&
+                  !isSameDay(day, selectedDay) &&
                     !isToday(day) &&
                     !isSameMonth(day, firstDayCurrentMonth) &&
                     "text-gray-400",
-                  isEqual(day, selectedDay) && isToday(day) && "bg-red-500",
-                  isEqual(day, selectedDay) && !isToday(day) && "bg-gray-900",
-                  !isEqual(day, selectedDay) && "hover:bg-gray-200",
-                  (isEqual(day, selectedDay) || isToday(day)) &&
+                  isSameDay(day, selectedDay) && isToday(day) && "bg-red-500",
+                  isSameDay(day, selectedDay) && !isToday(day) && "bg-gray-900",
+                  !isSameDay(day, selectedDay) && "hover:bg-gray-200",
+                  (isSameDay(day, selectedDay) || isToday(day)) &&
                     "font-semibold",
                   "mx-auto flex h-8 w-8 items-center justify-center rounded-full"
                 )}
